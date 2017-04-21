@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+          http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+          http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+          http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.2.xsd
+          http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+          http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+          http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+          http://www.springframework.org/schema/jpa http://www.springframework.org/schema/jpa/spring-jpa-3.2.xsd
+">
+    
+    
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <!-- Activate Spring Data JPA repository support -->
+    <!--   	<jpa:repositories base-package="" /> -->
+    <!-- Declare a datasource that has pooling capabilities-->
+ <!--      <bean id="jpaDataSourceAdria" class="com.mchange.v2.c3p0.ComboPooledDataSource" 
+          destroy-method="close" p:driverClass="#{dataSourceProp['app.jdbc.driverClassName.adria']}" 
+          p:jdbcUrl="#{dataSourceProp['app.jdbc.url.adria']}" p:user="#{dataSourceProp['app.jdbc.username.adria']}" 
+          p:password="#{dataSourceProp['app.jdbc.password.adria']}" p:acquireIncrement="5" 
+          p:idleConnectionTestPeriod="60" p:maxPoolSize="30" 
+          p:maxStatements="30" p:minPoolSize="10"/>
+          
+     <bean id="externalDataSourceAdria" class="com.mchange.v2.c3p0.ComboPooledDataSource" 
+          destroy-method="close" p:driverClass="#{dataSourceProp['app.jdbc.driverClassName.externe']}" 
+          p:jdbcUrl="#{dataSourceProp['app.jdbc.url.externe']}" p:user="#{dataSourceProp['app.jdbc.username.externe']}" 
+          p:password="#{dataSourceProp['app.jdbc.password.externe']}" p:acquireIncrement="5" 
+          p:idleConnectionTestPeriod="60" p:maxPoolSize="30" 
+          p:maxStatements="30" p:minPoolSize="10"/>   
+
+     <bean id="jpaDataSourceAdria" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="#{dataSourceProp['app.jdbc.driverClassName.adria']}" />
+        <property name="url" value="#{dataSourceProp['app.jdbc.url.adria']}" />
+        <property name="username" value="#{dataSourceProp['app.jdbc.username.adria']}" />
+        <property name="password" value="#{dataSourceProp['app.jdbc.password.adria']}" />
+    </bean>
+    
+     
+    <bean id="externalDataSourceAdria" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="#{dataSourceProp['app.jdbc.driverClassName.externe']}" />
+        <property name="url" value="#{dataSourceProp['app.jdbc.url.externe']}" />
+        <property name="username" value="#{dataSourceProp['app.jdbc.username.externe']}" />
+        <property name="password" value="#{dataSourceProp['app.jdbc.password.externe']}" />
+    </bean> --> 
+    
+    <util:properties id="dataSourceProp"  
+                    location="classpath:batchConfig/dataSourceConfig.properties" /> 
+    
+   <bean id="jpaDataSourceAdria" class="org.apache.commons.dbcp.BasicDataSource"
+             destroy-method="close">
+             <property name="driverClassName" value="#{dataSourceProp['app.jdbc.driverClassName.adria']}" />
+             <property name="url" value="#{dataSourceProp['app.jdbc.url.adria']}" />
+             <property name="username" value="#{dataSourceProp['app.jdbc.username.adria']}" />
+             <property name="password" value="#{dataSourceProp['app.jdbc.password.adria']}" />
+             <property name="maxActive" value="30" />
+             <property name="maxWait" value="10000" />
+             <property name="validationQuery" value="select 1 from dual" />
+             <property name="testWhileIdle" value="false" />
+             <property name="removeAbandonedTimeout" value="60" />
+             <property name="removeAbandoned" value="true" />
+             <property name="logAbandoned" value="true" />
+             <property name="minEvictableIdleTimeMillis" value="30000" />
+             <property name="timeBetweenEvictionRunsMillis" value="5000" />
+       </bean>
+       
+<!--     <bean id="externalDataSourceAdria" class="org.apache.commons.dbcp.BasicDataSource" -->
+<!--              destroy-method="close"> -->
+<!--              <property name="driverClassName" value="#{dataSourceProp['app.jdbc.driverClassName.externe']}" /> -->
+<!--              <property name="url" value="#{dataSourceProp['app.jdbc.url.externe']}" /> -->
+<!--              <property name="username" value="#{dataSourceProp['app.jdbc.username.externe']}" /> -->
+<!--              <property name="password" value="#{dataSourceProp['app.jdbc.password.externe']}" /> -->
+<!--              <property name="maxActive" value="30" /> -->
+<!--              <property name="maxWait" value="10000" /> -->
+<!--              <property name="validationQuery" value="select 1 from dual" /> -->
+<!--              <property name="testWhileIdle" value="false" /> -->
+<!--               <property name="removeAbandonedTimeout" value="60" /> -->
+<!--              <property name="removeAbandoned" value="true" /> -->
+<!--              <property name="logAbandoned" value="true" /> -->
+<!--              <property name="minEvictableIdleTimeMillis" value="30000" /> -->
+<!--              <property name="timeBetweenEvictionRunsMillis" value="5000" /> -->
+             
+<!--        </bean> -->
+    
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+        <property name="dataSource" ref="jpaDataSourceAdria"/>
+        <property name="useTransactionAwareDataSource" value="false"/>
+        <property name="exposeTransactionAwareSessionFactory" value="false"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">
+                    org.hibernate.dialect.Oracle10gDialect
+                </prop>
+                <prop key="hibernate.show_sql">false</prop>
+                <prop key="hibernate.connection.release_mode">
+                    auto
+                </prop>
+                <prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate3.SpringSessionContext
+                </prop>
+                <prop key="hibernate.transaction.flush_before_completion">
+                    true
+                </prop>
+                <prop key="hibernate.transaction.auto_close_session">
+                    true
+                </prop>
+                <prop key="hibernate.max_fetch_depth">1</prop>
+                <prop key="hibernate.bytecode.use_reflection_optimizer">true</prop>
+                <prop key="hibernate.jdbc.batch_size">30</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.order_inserts">true</prop>
+                <prop key="hibernate.order_updates">true</prop>
+                <prop key="hibernate.use_outer_join">true</prop>
+                <prop key="hibernate.max_fetch_depth">1</prop>
+                <prop key="hibernate.cache.use_query_cache">false</prop>
+                <prop key="hibernate.cache.use_second_level_cache"> false</prop>
+                <prop key="hibernate.generate_statistics">true</prop>
+                <prop key="hibernate.jdbc.use_streams_for_binary">true</prop>
+                <prop key="hibernate.cache.use_structured_entries"> true</prop>
+                <prop key="hibernate.hbm2ddl.auto">none</prop>
+                <prop key="javax.persistence.validation.mode">none</prop>
+            </props>
+        </property>
+    </bean>
+    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+    
+<!--        <jdbc:initialize-database data-source="jpaDataSourceAdria">
+          <jdbc:script location="org/springframework/batch/core/schema-oracle10g.sql" />
+          <jdbc:script location="org/springframework/batch/core/schema-drop-oracle10g.sql" />
+    </jdbc:initialize-database>-->
+</beans>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+          http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+          http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+          http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-3.2.xsd
+          http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+          http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd
+          http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+          http://www.springframework.org/schema/jpa http://www.springframework.org/schema/jpa/spring-jpa-3.2.xsd
+          http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch-2.2.xsd
+">
+    
+    <!-- Declaration Job Luncher -->
+        <bean id="jobLauncher" 
+          class="org.springframework.batch.core.launch.support.SimpleJobLauncher" 
+          p:jobRepository-ref="jobRepository" p:taskExecutor-ref="taskExecutor"/>
+    <bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor"/>
+    <batch:job-repository id="jobRepository" 
+                          data-source="jpaDataSourceAdria" 
+                          isolation-level-for-create="DEFAULT" 
+                          transaction-manager="transactionManager"/>
+	
+    
+    
+   <!-- <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <constructor-arg ref="jpaDataSourceAdria"/>
+    </bean> -->
+    
+    <!-- Soit on utilise un bean du classe ItemRetourprocessor,ou bien on l'annoté par un component pour qu'elle soit connait  -->
+    <bean id="processor" class="ma.adria.batch.processor.ItemRetourprocessor" />
+    <bean id="fluxWriter" class="ma.adria.batch.writer.FluxWriter" />
+    <!-- **************************************************************************** -->
+    <!-- Le Reader du Fichier   												      -->
+    <!-- **************************************************************************** -->
+    <bean id="readerItem" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+        <property name="encoding" value="UTF-8" />
+        <property name="resource" value="file:#{jobParameters['targetFileName']}" />
+        <property name="comments" value="§,#"/>
+        <property name="lineMapper">
+            <bean class="org.springframework.batch.item.file.mapping.PatternMatchingCompositeLineMapper">
+                <property name="tokenizers">
+					<map>
+						<entry key="*" value-ref="bodyTokenizer" />
+					</map>
+				</property>
+				<property name="fieldSetMappers">
+					<map>
+						<entry key="*" value-ref="bodyMapper" />
+					</map>
+				</property>
+            </bean>
+        </property>
+    </bean>
+    <bean id="bodyTokenizer" class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+		<property name="names" value="CODE_ETAT,LIBELLE" />
+        <property name="delimiter" value="," />
+    </bean>
+    <bean id="bodyMapper" class="ma.adria.batch.mapper.FieldSetFluxMapper" />
+    
+<!-- XML ItemWriter which writes the data in XML format -->
+	<bean id="xmlItemWriter" class="org.springframework.batch.item.xml.StaxEventItemWriter" scope="step">
+
+		<property name="resource" value="file:#{jobParameters['xmlFile']}" />
+
+		<property name="rootTagName" value="UniversityExamResultList" />
+
+		<property name="marshaller">
+
+			<bean class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+				<property name="classesToBeBound">
+					<list>
+						<value>ma.adria.batch.model.Flux</value>
+					</list>
+				</property>
+			</bean>
+
+		</property>
+
+	</bean>
+    
+    
+    
+    <!-- **************************************************************************** -->
+    <!--                                                                              -->
+    <!-- JOB 1 :    -->
+    <!--                                                                              -->
+    <!-- **************************************************************************** -->
+   
+     <!--DELCARATION DU JOB Tasklet--> 
+    <batch:job id="FluxTaskletJob" job-repository="jobRepository">
+        <batch:step id="FluxTaskletStep" > 
+       <bean id="FluxTasklet" class="ma.adria.batch.tasklet.FluxTasklet" scope="step">
+       <property name="dataSource" ref="jpaDataSourceAdria"/>
+       <!-- <property name="CODE_ETAT" value="#{batchParamProp['CODE_ETAT']}"/> -->
+        <!--<property name="CODE_LANGUE" value="#{batchParamProp['CODE_LANGUE']}"/>-->
+       <property name="CLASS" value="#{batchParamProp['CLASS']}"/> 
+       <property name="CODE_RETOUR" value="#{batchParamProp['CODE_RETOUR']}"/>
+       <property name="MSG_RETOUR" value="#{batchParamProp['MSG_RETOUR']}"/> 
+     <property name="CODE_ETATToUpdate" value="#{batchParamProp['CODE_ETATToUpdate']}"/> 
+       <property name="filePath" value="#{batchParamProp['filePath']}"/>
+       <property name="NOM_TABLE" value="#{batchParamProp['NOM_TABLE']}"/>
+       <property name="selectFlux" value="${ma.adria.select.flux}"/>
+       <property name="insertFlux" value="${ma.adria.insert.flux}"/>
+       <property name="updateFlux" value="${ma.adria.update.flux}"/>
+        <property name="insertExelLog" value="${ma.adria.insert.exellog}"/>
+        <property name="selectMax" value="${ma.adria.select.max}"/>
+     </bean>
+        </batch:step>  
+    </batch:job>
+     
+     <!-- **************************************************************************** -->
+    <!-- DELCARATION DU JOB	TO WRITE IN DATABASE													      -->
+    <!-- **************************************************************************** -->
+    <batch:job id="JobWriterInDB" job-repository="jobRepository">
+    	<batch:step id="batchWriter">
+        <batch:tasklet>
+            <batch:chunk reader="readerItem"
+            			 processor="processor"
+                         writer="fluxWriter"
+                         commit-interval="5000">
+            </batch:chunk>
+        </batch:tasklet>
+    </batch:step>
+    </batch:job>
+     <!-- **************************************************************************** -->
+    <!-- DELCARATION DU JOB	TO WRITE IN XML FILE													      -->
+    <!-- **************************************************************************** -->
+    <batch:job id="jobXml">
+		<batch:step id="step1">
+			<batch:tasklet>
+				<batch:chunk reader="readerItem" writer="xmlItemWriter"	processor="processor" commit-interval="5000" />
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+</beans>
